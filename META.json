@@ -1,0 +1,68 @@
+{
+   "abstract" : "Generic traversal of distributions in a CPAN repository",
+   "author" : [
+      "David Golden <dagolden@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.102340, CPAN::Meta::Converter version 2.102160",
+   "license" : [
+      "apache_2_0"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "CPAN-Visitor",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "examples",
+         "corpus"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.31"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Archive::Extract" : "0.34",
+            "File::Find" : 0,
+            "File::Temp" : "0.20",
+            "File::pushd" : "1.00",
+            "Moose" : "0.93",
+            "MooseX::Params::Validate" : "0.13",
+            "Parallel::ForkManager" : "0.007005",
+            "Path::Class" : "0.17",
+            "autodie" : 0,
+            "namespace::autoclean" : "0.09",
+            "perl" : "5.006"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : 0
+         }
+      }
+   },
+   "provides" : {
+      "CPAN::Visitor" : {
+         "file" : "lib/CPAN/Visitor.pm",
+         "version" : "0.002"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "homepage" : "http://github.com/dagolden/cpan-visitor/tree",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/dagolden/cpan-visitor.git",
+         "web" : "http://github.com/dagolden/cpan-visitor/tree"
+      }
+   },
+   "version" : "0.002"
+}
+

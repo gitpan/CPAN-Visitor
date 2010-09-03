@@ -1,27 +1,33 @@
-# Copyright (c) 2010 by David Golden. All rights reserved.
-# Licensed under Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a
-# copy of the License from http://www.apache.org/licenses/LICENSE-2.0
-
-package CPAN::Visitor;
+# 
+# This file is part of CPAN-Visitor
+# 
+# This software is Copyright (c) 2010 by David Golden.
+# 
+# This is free software, licensed under:
+# 
+#   The Apache License, Version 2.0, January 2004
+# 
+use 5.006;
 use strict;
 use warnings;
+package CPAN::Visitor;
+BEGIN {
+  $CPAN::Visitor::VERSION = '0.002';
+}
+# ABSTRACT: Generic traversal of distributions in a CPAN repository
+
 use autodie;
 
-our $VERSION = '0.001';
-$VERSION = eval $VERSION; ## no critic
-
-use Archive::Extract ();
+use Archive::Extract 0.34 ();
 use File::Find ();
-use File::pushd ();
-use File::Temp ();
-use Path::Class ();
-use Parallel::ForkManager ();
+use File::pushd 1.00 ();
+use File::Temp 0.20 ();
+use Path::Class 0.17 ();
+use Parallel::ForkManager 0.007005 ();
 
-use Moose;
-use MooseX::Params::Validate;
-use namespace::autoclean;
+use Moose 0.93 ;
+use MooseX::Params::Validate 0.13;
+use namespace::autoclean 0.09 ;
 
 has 'cpan'  => ( is => 'ro', required => 1 );
 has 'quiet' => ( is => 'rw', default => 1 );
@@ -284,218 +290,336 @@ __PACKAGE__->meta->make_immutable;
 
 1;
 
-__END__
 
-=begin wikidoc
 
-= NAME
+=pod
+
+=head1 NAME
 
 CPAN::Visitor - Generic traversal of distributions in a CPAN repository
 
-= VERSION
+=head1 VERSION
 
-This documentation describes version %%VERSION%%.
+version 0.002
 
-= SYNOPSIS
+=head1 SYNOPSIS
 
-    use CPAN::Visitor;
-    my $visitor = CPAN::Visitor->new( cpan => "/path/to/cpan" );
+     use CPAN::Visitor;
+     my $visitor = CPAN::Visitor->new( cpan => "/path/to/cpan" );
+ 
+     # Prepare to visit all distributions
+     $visitor->select();
+ 
+     # Or a subset of distributions
+     $visitor->select(
+       subtrees => [ qr{D/DA}, qr{A/AD} ], # relative to authors/id/
+       exclude => qr{/Acme-},              # No Acme- dists
+       match => qr{/Test-}                 # Only Test- dists
+     );
+ 
+     # Action is specified via a callback
+     $visitor->iterate(
+       visit => sub {
+         my $job = shift;
+         print $job->{distfile} if -f 'Build.PL'
+       }
+     );
+ 
+     # Or start with a list of files
+     $visitor = CPAN::Visitor->new(
+       cpan => "/path/to/cpan",
+       files => \@distfiles,     # e.g. ANDK/CPAN-1.94.tar.gz
+     );
+     $visitor->iterate( visit => \&callback );
+ 
+     # Iterate in parallel
+     $visitor->iterate( visit => \&callback, jobs => 5 );
 
-    # Prepare to visit all distributions
-    $visitor->select();
-
-    # Or a subset of distributions
-    $visitor->select(
-      subtrees => [ qr{D/DA}, qr{A/AD} ], # relative to authors/id/
-      exclude => qr{/Acme-},              # No Acme- dists
-      match => qr{/Test-}                 # Only Test- dists
-    );
-
-    # Action is specified via a callback
-    $visitor->iterate(
-      visit => sub {
-        my $job = shift;
-        print $job->{distfile} if -f 'Build.PL'
-      }
-    );
-
-    # Or start with a list of files
-    $visitor = CPAN::Visitor->new(
-      cpan => "/path/to/cpan",
-      files => \@distfiles,     # e.g. ANDK/CPAN-1.94.tar.gz
-    );
-    $visitor->iterate( visitor => \&callback );
-
-    # Iterate in parallel
-    $visitor->iterate( visitor => \&callback, jobs => 5 );
-
-
-= DESCRIPTION
+=head1 DESCRIPTION
 
 A very generic, callback-driven program to iterate over a CPAN repository.
 
 Needs better documentation and tests, but is provided for others to examine,
 use or contribute to.
 
-= USAGE
+=for Pod::Coverage BUILD
 
-== new
+=head1 USAGE
 
-  my $visitor = CPAN::Visitor->new( @args );
+=head2 new
+
+   my $visitor = CPAN::Visitor->new( @args );
 
 Object attributes include:
 
-* {cpan} -- path to CPAN or mini CPAN repository. Required.
-* {quiet} -- whether warnings should be silenced (e.g. from extraction). Optional.
-* {stash} -- hash-ref of user-data to be made available during iteration. Optional.
-* {files} -- array-ref with a pre-selection of of distribution files. 
-These must be in AUTHOR/NAME.suffix format. Optional.
+=over
 
-== select
+=item *
 
-  $visitor->select( @args );
+C<<< cpan >>> -- path to CPAN or mini CPAN repository. Required.
+
+=item *
+
+C<<< quiet >>> -- whether warnings should be silenced (e.g. from extraction). Optional.
+
+=item *
+
+C<<< stash >>> -- hash-ref of user-data to be made available during iteration. Optional.
+
+=item *
+
+C<<< files >>> -- array-ref with a pre-selection of of distribution files. 
+These must be in AUTHORE<sol>NAME.suffix format. Optional.
+
+=back
+
+=head2 select
+
+   $visitor->select( @args );
 
 Valid arguments include:
 
-* {subtrees} -- path or array-ref of paths.  These must be relative to the
-'authors/id/' directory within a CPAN repo.  If given, only files within
-those subtrees will be considered. If not specified, the entire 'authors/id'
+=over
+
+=item *
+
+C<<< subtrees >>> -- path or array-ref of paths.  These must be relative to the
+'authorsE<sol>idE<sol>' directory within a CPAN repo.  If given, only files within
+those subtrees will be considered. If not specified, the entire 'authorsE<sol>id'
 tree is searched.
-* {exclude} -- qr() or array-ref of qr() patterns.  If a path matches *any*
+
+=item *
+
+C<<< exclude >>> -- qr() or array-ref of qr() patterns.  If a path matches B<any>
 pattern, it is excluded
-* {match} -- qr() or array-ref of qr() patterns.  If an array-ref is provided,
-only paths that match *all* patterns are included
-* all_files -- boolean that determines whether all files or only files that have
+
+=item *
+
+C<<< match >>> -- qr() or array-ref of qr() patterns.  If an array-ref is provided,
+only paths that match B<all> patterns are included
+
+=item *
+
+all_files -- boolean that determines whether all files or only files that have
 a distribution archive suffix are selected.  Default is false.
-* append -- boolean that determines whether the selected files should be 
+
+=item *
+
+append -- boolean that determines whether the selected files should be 
 appended to previously selected files. The default is false, which replaces
 any previous selection
 
-The {select} method returns a count of files selected.
+=back
 
-== iterate
+The C<<< select >>> method returns a count of files selected.
 
- $visitor->iterate( @args );
+=head2 iterate
+
+  $visitor->iterate( @args );
 
 Valid arguments include:
 
-* {jobs} -- non-negative integer specifying the maximum number of 
-forked processes. Defaults to none.
-* {check} -- code reference callback
-* {start} -- code reference callback
-* {extract} -- code reference callback
-* {enter} -- code reference callback
-* {visit} -- code reference callback
-* {leave} -- code reference callback
-* {finish} -- code reference callback
+=over
 
-See [ACTION CALLBACKS] for more.  Generally, you only need to provide the
-{visit} callback, which is called from inside the unpacked distribution
+=item *
+
+C<<< jobs >>> -- non-negative integer specifying the maximum number of 
+forked processes. Defaults to none.
+
+=item *
+
+C<<< check >>> -- code reference callback
+
+=item *
+
+C<<< start >>> -- code reference callback
+
+=item *
+
+C<<< extract >>> -- code reference callback
+
+=item *
+
+C<<< enter >>> -- code reference callback
+
+=item *
+
+C<<< visit >>> -- code reference callback
+
+=item *
+
+C<<< leave >>> -- code reference callback
+
+=item *
+
+C<<< finish >>> -- code reference callback
+
+=back
+
+See L<ACTION CALLBACKS> for more.  Generally, you only need to provide the
+C<<< visit >>> callback, which is called from inside the unpacked distribution
 directory.
 
-The {iterate} method always returns true.
+The C<<< iterate >>> method always returns true.
 
-= ACTION CALLBACKS
+=head1 ACTION CALLBACKS
 
 Each selected distribution is processed with a series of callback
 functions.  These are each passed a hash-ref with information about
 the particular distribution being processed. 
 
-  sub _my_visit {
-    my $job = shift;
-    # do stuff
-  }
+   sub _my_visit {
+     my $job = shift;
+     # do stuff
+   }
 
 The job hash-ref is initialized with the following fields:
 
-* {distfile} -- the unique, short CPAN distfile name, 
-e.g. DAGOLDEN/CPAN-Visitor-0.001.tar.gz
-* {distpath} -- the absolute path the distribution archive,
-e.g. /my/cpan/authors/id/D/DA/DAGOLDEN/CPAN-Visitor-0.001.tar.gz
-* {tempdir}  -- a File::Temp directory object for extraction or other things
-* {stash}    -- the 'stash' hashref from the Visitor object
-* {quiet}    -- the 'quiet' flag from the Visitor object
-* {result}   -- an empty hashref to start; the return values from each
+=over
+
+=item *
+
+C<<< distfile >>> -- the unique, short CPAN distfile name, 
+e.g. DAGOLDENE<sol>CPAN-Visitor-0.001.tar.gz
+
+=item *
+
+C<<< distpath >>> -- the absolute path the distribution archive,
+e.g. E<sol>myE<sol>cpanE<sol>authorsE<sol>idE<sol>DE<sol>DAE<sol>DAGOLDENE<sol>CPAN-Visitor-0.001.tar.gz
+
+=item *
+
+C<<< tempdir >>>  -- a File::Temp directory object for extraction or other things
+
+=item *
+
+C<<< stash >>>    -- the 'stash' hashref from the Visitor object
+
+=item *
+
+C<<< quiet >>>    -- the 'quiet' flag from the Visitor object
+
+=item *
+
+C<<< result >>>   -- an empty hashref to start; the return values from each
 action are added and may be referenced by subsequent actions
 
-The {result} field is used to accumulate the return values from action
+=back
+
+The C<<< result >>> field is used to accumulate the return values from action
 callbacks.  For example, the return value from the default 'extract' action is
 the unpacked distribution directory:
 
-  $job->{result}{extract} # distribution directory path
+   $job->{result}{extract} # distribution directory path
 
-You do not need to store the results yourself -- the {iterate} method
+You do not need to store the results yourself -- the C<<< iterate >>> method
 takes care of it for you.
 
 Callbacks occur in the following order.  Some callbacks skip further
 processing if the return value is false.
 
-* {check} -- determiens whether the distribution should be processed; 
+=over
+
+=item *
+
+C<<< check >>> -- determiens whether the distribution should be processed; 
 goes to next file if false; default is always true
-* {start} -- used for any setup, logging, etc; default does nothing
-* {extract} -- extracts a distribution into a temp directory or otherwise
+
+=item *
+
+C<<< start >>> -- used for any setup, logging, etc; default does nothing
+
+=item *
+
+C<<< extract >>> -- extracts a distribution into a temp directory or otherwise
 prepares for visiting; skips to finish action if it returns
 a false value; default returns the path to the extracted
 directory
-* {enter} -- skips to the finish action if it returns false; default takes
+
+=item *
+
+C<<< enter >>> -- skips to the finish action if it returns false; default takes
 the result of extract, chdir's into it, and returns the
 original directory
-* {visit} -- examine the distribution or otherwise do stuff; the default
+
+=item *
+
+C<<< visit >>> -- examine the distribution or otherwise do stuff; the default
 does nothing;
-* {leave} -- default returns to the original directory (the result of enter)
-* {finish} -- any teardown processing, logging, etc.
+
+=item *
+
+C<<< leave >>> -- default returns to the original directory (the result of enter)
+
+=item *
+
+C<<< finish >>> -- any teardown processing, logging, etc.
+
+=back
 
 These allow complete customization of the iteration process.  For example,
 one could do something like this:
 
-* replace the default {extract} callback with one that returns
+=over
+
+=item *
+
+replace the default C<<< extract >>> callback with one that returns
 an arrayref of distribution files without actually unpacking it into
 a physical directory
-* replace the default {enter} callback with one that does nothing but 
-return a true value; replace the default {leave} callback likewise
-* have the {visit} callback get the {$job->{result}{extract}} listing
+
+=item *
+
+replace the default C<<< enter >>> callback with one that does nothing but 
+return a true value; replace the default C<<< leave >>> callback likewise
+
+=item *
+
+have the C<<< visit >>> callback get the C<<< $job->{result}{extract} >>> listing
 and examine it for the presence of certain files
+
+=back
 
 This could potentially speed up iteration if only the file names within
 the distribution are of interest and not the contents of the actual files.
 
-= BUGS
+=head1 BUGS
 
 Please report any bugs or feature requests using the CPAN Request Tracker
-web interface at [http://rt.cpan.org/Dist/Display.html?Queue=CPAN-Visitor]
+web interface at L<http://rt.cpan.org/Dist/Display.html?Queue=CPAN-Visitor>
 
 When submitting a bug or request, please include a test-file or a patch to an
 existing test-file that illustrates the bug or desired feature.
 
-= SEE ALSO
+=head1 SEE ALSO
 
-* [App::CPAN::Mini::Visit]
-* [CPAN::Mini::Visit]
+=over
 
-= AUTHOR
+=item *
 
-David A. Golden (DAGOLDEN)
+L<App::CPAN::Mini::Visit>
 
-= COPYRIGHT AND LICENSE
+=item *
 
-Copyright (c) 2010 by David A. Golden. All rights reserved.
+L<CPAN::Mini::Visit>
 
-Licensed under Apache License, Version 2.0 (the "License").
-You may not use this file except in compliance with the License.
-A copy of the License was distributed with this file or you may obtain a
-copy of the License from http://www.apache.org/licenses/LICENSE-2.0
+=back
 
-Files produced as output though the use of this software, shall not be
-considered Derivative Works, but shall be considered the original work of the
-Licensor.
+=head1 AUTHOR
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+David Golden <dagolden@cpan.org>
 
-=end wikidoc
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by David Golden.
+
+This is free software, licensed under:
+
+  The Apache License, Version 2.0, January 2004
 
 =cut
+
+
+__END__
+
 
