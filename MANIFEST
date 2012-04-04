@@ -5,6 +5,7 @@ META.json
 META.yml
 Makefile.PL
 README
+README.PATCHING
 dist.ini
 examples/find-BuildPL.pl
 examples/scan-meta-files.pl
@@ -14,7 +15,9 @@ t/00-compile.t
 t/01-CPAN-Visitor.t
 t/CPAN.tgz
 xt/author/critic.t
+xt/author/pod-spell.t
 xt/release/distmeta.t
 xt/release/pod-coverage.t
 xt/release/pod-syntax.t
 xt/release/portability.t
+xt/release/test-version.t

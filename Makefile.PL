@@ -2,40 +2,42 @@
 use strict;
 use warnings;
 
-BEGIN { require 5.006; }
+use 5.006;
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Generic traversal of distributions in a CPAN repository',
-  'AUTHOR' => 'David Golden <dagolden@cpan.org>',
-  'BUILD_REQUIRES' => {
-    'Test::More' => '0'
+  "ABSTRACT" => "Generic traversal of distributions in a CPAN repository",
+  "AUTHOR" => "David Golden <dagolden\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Test::More" => 0
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'CPAN-Visitor',
-  'EXE_FILES' => [],
-  'LICENSE' => 'apache',
-  'NAME' => 'CPAN::Visitor',
-  'PREREQ_PM' => {
-    'Archive::Extract' => '0.34',
-    'File::Find' => '0',
-    'File::Temp' => '0.20',
-    'File::pushd' => '1.00',
-    'Moose' => '0.93',
-    'MooseX::Params::Validate' => '0.13',
-    'Parallel::ForkManager' => '0.007005',
-    'Path::Class' => '0.17',
-    'autodie' => '0',
-    'namespace::autoclean' => '0.09'
+  "DISTNAME" => "CPAN-Visitor",
+  "EXE_FILES" => [],
+  "LICENSE" => "apache",
+  "NAME" => "CPAN::Visitor",
+  "PREREQ_PM" => {
+    "Archive::Extract" => "0.34",
+    "File::Find" => 0,
+    "File::Temp" => "0.20",
+    "File::pushd" => "1.00",
+    "Moose" => "0.93",
+    "MooseX::Params::Validate" => "0.13",
+    "Parallel::ForkManager" => "0.007005",
+    "Path::Class" => "0.17",
+    "autodie" => 0,
+    "namespace::autoclean" => "0.09",
+    "strict" => 0,
+    "warnings" => 0
   },
-  'VERSION' => '0.002',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "0.003",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

@@ -1,20 +1,9 @@
-# 
-# This file is part of CPAN-Visitor
-# 
-# This software is Copyright (c) 2010 by David Golden.
-# 
-# This is free software, licensed under:
-# 
-#   The Apache License, Version 2.0, January 2004
-# 
 use 5.006;
 use strict;
 use warnings;
 package CPAN::Visitor;
-BEGIN {
-  $CPAN::Visitor::VERSION = '0.002';
-}
 # ABSTRACT: Generic traversal of distributions in a CPAN repository
+our $VERSION = '0.003'; # VERSION
 
 use autodie;
 
@@ -52,7 +41,7 @@ my $archive_re = qr{\.(?:tar\.(?:bz2|gz|Z)|t(?:gz|bz)|zip)$}i;
 
 sub select {
   my ($self, %params) = validated_hash( \@_,
-    match    => { isa => 'RegexpRef | ArrayRef[RegxpRef]', default => [qr/./] },
+    match    => { isa => 'RegexpRef | ArrayRef[RegexpRef]', default => [qr/./] },
     exclude  => { isa => 'RegexpRef | ArrayRef[RegexpRef]', default => [] },
     subtrees => { isa => 'Str | ArrayRef[Str]', default => [] },
     all_files => { isa => 'Bool', default => 0 },
@@ -300,7 +289,7 @@ CPAN::Visitor - Generic traversal of distributions in a CPAN repository
 
 =head1 VERSION
 
-version 0.002
+version 0.003
 
 =head1 SYNOPSIS
 
@@ -522,7 +511,7 @@ processing if the return value is false.
 
 =item *
 
-C<<< check >>> -- determiens whether the distribution should be processed; 
+C<<< check >>> -- determines whether the distribution should be processed;
 goes to next file if false; default is always true
 
 =item *
@@ -604,6 +593,25 @@ L<App::CPAN::Mini::Visit>
 L<CPAN::Mini::Visit>
 
 =back
+
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
+
+=head1 SUPPORT
+
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<http://rt.cpan.org/Public/Dist/Display.html?Name=CPAN-Visitor>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/dagolden/cpan-visitor>
+
+  git clone https://github.com/dagolden/cpan-visitor.git
 
 =head1 AUTHOR
 
